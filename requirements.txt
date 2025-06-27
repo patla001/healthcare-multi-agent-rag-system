@@ -1,0 +1,17 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+openai==1.59.0
+langchain==0.3.13
+langchain-openai==0.2.14
+langchain-community==0.3.13
+pydantic==2.10.4
+python-dotenv==1.0.1
+httpx==0.28.1
+requests==2.32.3
+geopy==2.4.1
+geocoder==1.38.1
+vectorize-io==0.2.1
+pydantic-settings==2.7.0
+typing-extensions==4.12.2
+fastapi-cors==0.0.6 

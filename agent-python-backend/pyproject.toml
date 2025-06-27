@@ -1,0 +1,25 @@
+[project]
+name = "agent-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.13",
+    "firecrawl-py>=2.9.0",
+    "geocoder>=1.38.1",
+    "geopy>=2.4.1",
+    "httpx>=0.28.1",
+    "langchain>=0.3.26",
+    "langchain-openai>=0.3.25",
+    "langsmith>=0.2.15",
+    "openai>=1.91.0",
+    "openai-agents>=0.0.19",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.0",
+    "python-dotenv>=1.1.0",
+    "python-multipart>=0.0.20",
+    "requests>=2.32.4",
+    "typing-extensions>=4.14.0",
+    "uvicorn>=0.34.3",
+]

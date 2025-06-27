@@ -1,0 +1,327 @@
+import os
+import re
+import json
+import asyncio
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import requests
+from openai import OpenAI
+
+# Initialize FastAPI app
+app = FastAPI(title="Healthcare Multi-Agent RAG System")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
+# Initialize OpenAI client
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+print("Healthcare Multi-Agent RAG System Starting...")
+print("Server: http://0.0.0.0:8000")
+print("Using OpenAI for enhanced healthcare responses")
+print("Frontend CORS: http://localhost:3000")
+
+# ===============================
+# DATA MODELS
+# ===============================
+
+class WeatherData(BaseModel):
+    temperature: float
+    condition: str
+    humidity: float
+    windSpeed: float
+    uvIndex: float
+
+class LocationData(BaseModel):
+    latitude: float
+    longitude: float
+    city: Optional[str] = None
+    weather: Optional[WeatherData] = None
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+    location: Optional[LocationData] = None
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+    stream: bool = True
+
+class HospitalRagRequest(BaseModel):
+    location: str
+    injury_type: str = "general"
+    max_results: int = 5
+
+# ===============================
+# HEALTHCARE VALIDATION
+# ===============================
+
+def validate_healthcare_query(user_input: str) -> str:
+    """Validate that the query is healthcare-related"""
+    
+    healthcare_keywords = [
+        'hospital', 'doctor', 'medical', 'health', 'injury', 'pain', 'sick', 'treatment',
+        'emergency', 'clinic', 'nurse', 'medicine', 'symptom', 'fever', 'hurt', 'wound',
+        'care', 'therapy', 'diagnosis', 'patient', 'healthcare', 'wellness', 'disease',
+        'infection', 'surgery', 'prescription', 'urgent care', 'pharmacy', 'specialist'
+    ]
+    
+    non_healthcare_indicators = [
+        'weather forecast', 'stock price', 'news', 'sports', 'entertainment',
+        'cooking recipe', 'travel', 'shopping', 'politics', 'business',
+        'technology review', 'movie', 'music', 'game', 'fashion'
+    ]
+    
+    user_input_lower = user_input.lower()
+    
+    # Check for non-healthcare content
+    for indicator in non_healthcare_indicators:
+        if indicator in user_input_lower:
+            raise ValueError(f"Healthcare System Alert: This system is specialized for healthcare and hospital evaluation only. Your query about '{indicator}' is outside our scope. Please ask about hospitals, medical care, injuries, healthcare services, or weather-related health concerns.")
+    
+    # Check for healthcare content
+    has_healthcare_content = any(keyword in user_input_lower for keyword in healthcare_keywords)
+    
+    if not has_healthcare_content and len(user_input.split()) > 3:
+        raise ValueError("Healthcare System Alert: Please specify your healthcare-related question. This system helps with hospital evaluation, medical care, injuries, healthcare services, and weather-related health concerns. Please rephrase your query to include healthcare context.")
+    
+    return user_input
+
+# ===============================
+# HOSPITAL RAG FUNCTIONS
+# ===============================
+
+def extract_hospital_locations_from_rag(location: str, injury_type: str = "general") -> List[Dict]:
+    """Extract hospital location data from RAG system with OpenAI enhancement"""
+    try:
+        # Mock RAG search results (replace with actual RAG implementation)
+        mock_rag_results = [
+            {
+                "content": f"Regional Medical Center near {location} - Full-service hospital with emergency department, trauma center, and specialized care units. Located at downtown area with 24/7 availability.",
+                "metadata": {"relevance_score": 0.95, "source": "hospital_directory"}
+            },
+            {
+                "content": f"City General Hospital in {location} - Community hospital offering urgent care, family medicine, and surgical services. Known for excellent patient care and modern facilities.",
+                "metadata": {"relevance_score": 0.88, "source": "healthcare_database"}
+            },
+            {
+                "content": f"Emergency Care Center near {location} - Specialized emergency and urgent care facility with fast treatment times and expert medical staff.",
+                "metadata": {"relevance_score": 0.82, "source": "emergency_services"}
+            }
+        ]
+        
+        hospitals = []
+        for result in mock_rag_results:
+            hospital_info = parse_hospital_from_rag_content(
+                result["content"], 
+                result["metadata"], 
+                location
+            )
+            if hospital_info:
+                hospitals.append(hospital_info)
+        
+        return hospitals
+        
+    except Exception as e:
+        print(f"Error in RAG hospital extraction: {e}")
+        return []
+
+def parse_hospital_from_rag_content(content: str, metadata: dict, location: str) -> Optional[Dict]:
+    """Parse hospital information from RAG content"""
+    try:
+        # Extract hospital name
+        name_match = re.search(r'(.*?(?:Hospital|Medical Center|Clinic|Care Center))', content, re.IGNORECASE)
+        hospital_name = name_match.group(1).strip() if name_match else "Unknown Hospital"
+        
+        # Generate realistic hospital data
+        hospital_info = {
+            'name': hospital_name,
+            'address': f"123 Healthcare Blvd, {location}",
+            'phone': f"({555}) 123-4567",
+            'services': ['Emergency Care', 'Urgent Care', 'General Medicine'],
+            'rating': 4.2,
+            'emergency': True,
+            'urgent_care': True,
+            'coordinates': None,
+            'relevance_score': metadata.get('relevance_score', 0.0)
+        }
+        
+        # Try to extract coordinates using OpenAI if missing
+        if not hospital_info['coordinates']:
+            coords = extract_coordinates_with_openai(hospital_name, hospital_info['address'], location)
+            if coords:
+                hospital_info['coordinates'] = coords
+        
+        return hospital_info
+        
+    except Exception as e:
+        print(f"Error parsing hospital content: {e}")
+        return None
+
+def extract_coordinates_with_openai(hospital_name: str, address: str, location: str) -> Optional[Dict]:
+    """Use OpenAI to extract coordinates for hospital location"""
+    try:
+        prompt = f"""
+        Extract the approximate latitude and longitude coordinates for this hospital:
+        Hospital: {hospital_name}
+        Address: {address}
+        Location: {location}
+        
+        Respond with only a JSON object in this format:
+        {{"lat": latitude_number, "lng": longitude_number}}
+        
+        If you cannot determine exact coordinates, provide approximate coordinates for the general area of {location}.
+        """
+        
+        response = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=100
+        )
+        
+        result = response.choices[0].message.content.strip()
+        coordinates = json.loads(result)
+        
+        if 'lat' in coordinates and 'lng' in coordinates:
+            return coordinates
+            
+    except Exception as e:
+        print(f"OpenAI coordinate extraction error: {e}")
+    
+    return None
+
+# ===============================
+# API ENDPOINTS
+# ===============================
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "Healthcare Multi-Agent Backend",
+        "version": "1.0.0",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/healthcare")
+async def healthcare_check():
+    """Healthcare endpoint for frontend connectivity testing"""
+    return {
+        "status": "healthy",
+        "service": "Healthcare Multi-Agent Backend",
+        "version": "1.0.0",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.post("/api/hospitals/rag-locations")
+async def get_hospitals_from_rag(request: HospitalRagRequest):
+    """Get hospital locations from RAG system"""
+    try:
+        hospitals = extract_hospital_locations_from_rag(
+            request.location, 
+            request.injury_type
+        )
+        
+        return {
+            "success": True,
+            "hospitals": hospitals[:request.max_results],
+            "location": request.location,
+            "injury_type": request.injury_type,
+            "total_found": len(hospitals)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"RAG hospital extraction failed: {str(e)}")
+
+@app.post("/api/healthcare-chat")
+async def healthcare_chat(request: ChatRequest):
+    """Healthcare chat endpoint"""
+    try:
+        if not request.messages:
+            raise HTTPException(status_code=400, detail="No messages provided")
+        
+        user_message = request.messages[-1]
+        user_query = user_message.content
+        
+        # Validate healthcare query
+        try:
+            validate_healthcare_query(user_query)
+        except ValueError as e:
+            return {
+                "message": {
+                    "role": "assistant",
+                    "content": str(e),
+                    "type": "guardrail_rejection"
+                },
+                "guardrail_triggered": True,
+                "data_sources": []
+            }
+        
+        # Generate healthcare response
+        location_context = ""
+        if user_message.location:
+            location_context = f"Location: {user_message.location.city or 'Unknown'}"
+            if user_message.location.weather:
+                weather = user_message.location.weather
+                location_context += f" | Weather: {weather.temperature}°F, {weather.condition}"
+        
+        # Create response using OpenAI
+        system_prompt = f"""You are a healthcare assistant specializing in hospital evaluation and medical guidance for less severe injuries. 
+        
+        {location_context}
+        
+        Provide helpful, accurate healthcare information while emphasizing when to seek professional medical care. 
+        Focus on hospital recommendations, facility quality, staff performance, and availability information.
+        
+        For emergency situations, always recommend calling 911 or visiting the nearest emergency room immediately."""
+        
+        response = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_query}
+            ],
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        assistant_response = response.choices[0].message.content
+        
+        return {
+            "message": {
+                "role": "assistant",
+                "content": assistant_response,
+                "type": "healthcare"
+            },
+            "guardrail_triggered": False,
+            "data_sources": ["OpenAI GPT-3.5", "Healthcare Knowledge Base"]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Healthcare chat error: {str(e)}")
+
+# ===============================
+# MAIN EXECUTION
+# ===============================
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info"
+    )

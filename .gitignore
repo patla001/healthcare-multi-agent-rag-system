@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -14,7 +15,8 @@
 /coverage
 
 # next.js
-/.next/
+.next/
+**/.next/
 /out/
 
 # production
@@ -31,7 +33,18 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging
+.env.production
+.env.backup
+
+# Allow .env.example files
+!.env.example
+!**/.env.example
 
 # vercel
 .vercel
@@ -39,3 +52,74 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python Backend
+agent-python-backend/.env
+agent-python-backend/__pycache__/
+agent-python-backend/*.pyc
+agent-python-backend/*.pyo
+agent-python-backend/*.pyd
+agent-python-backend/.Python
+agent-python-backend/env/
+agent-python-backend/venv/
+agent-python-backend/.venv/
+agent-python-backend/pip-log.txt
+agent-python-backend/pip-delete-this-directory.txt
+agent-python-backend/.pytest_cache/
+agent-python-backend/.coverage
+agent-python-backend/htmlcov/
+agent-python-backend/dist/
+agent-python-backend/build/
+agent-python-backend/*.egg-info/
+
+# Logs
+*.log
+agent-python-backend/*.log
+backend.log
+
+# Test Results
+vectorize-test-results-*.json
+test-results/
+coverage/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# API Keys and Secrets (double protection)
+**/secrets/
+**/.secrets
+**/config/secrets.*
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+.cache/
+
+# Package manager locks (optional - you might want to keep these)
+# package-lock.json
+# pnpm-lock.yaml
+# yarn.lock
+# agent-python-backend/uv.lock
