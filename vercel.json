@@ -1,33 +1,5 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    },
-    {
-      "src": "agent-python-backend/main.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/python/(.*)",
-      "dest": "agent-python-backend/main.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
-  "env": {
-    "PYTHON_VERSION": "3.11",
-    "NEXT_PUBLIC_BACKEND_URL": ""
-  },
   "functions": {
-    "agent-python-backend/main.py": {
-      "runtime": "python3.11"
-    },
     "api/python.py": {
       "runtime": "python3.9"
     }
@@ -38,9 +10,7 @@
       "destination": "/api/python.py"
     }
   ],
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_BACKEND_URL": ""
-    }
+  "env": {
+    "NEXT_PUBLIC_BACKEND_URL": ""
   }
 } 
