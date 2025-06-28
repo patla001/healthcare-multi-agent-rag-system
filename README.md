@@ -642,3 +642,4 @@ agent-next-typescript/
 - **Error Handling**: Graceful fallbacks ensure system reliability
 
 For detailed testing information, see `VECTORIZE-RAG-TESTING.md`.
+# Force deployment
