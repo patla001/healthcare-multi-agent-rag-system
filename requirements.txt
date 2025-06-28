@@ -11,7 +11,6 @@ httpx==0.28.1
 requests==2.32.3
 geopy==2.4.1
 geocoder==1.38.1
-vectorize-io==0.2.1
 pydantic-settings==2.7.0
 typing-extensions==4.12.2
 fastapi-cors==0.0.6 
