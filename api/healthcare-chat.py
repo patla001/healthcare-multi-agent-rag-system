@@ -22,12 +22,19 @@ class handler(BaseHTTPRequestHandler):
             user_location = data.get('location', {})
             weather_data = data.get('weather', {})
             
-            # Get the latest user message
+            # Get the latest user message and extract location data from it
             user_message = ""
             for msg in reversed(messages):
                 if msg.get('role') == 'user':
                     user_message = msg.get('content', '')
+                    # Extract location data from the message if available
+                    if msg.get('location') and not user_location:
+                        user_location = msg.get('location', {})
+                        print(f"📍 Extracted location from message: {user_location}")
                     break
+            
+            print(f"🔍 Processing request with location: {user_location}")
+            print(f"💬 User message: {user_message}")
             
             # Generate healthcare response
             response = self.generate_healthcare_response(user_message, user_location, weather_data)
@@ -156,8 +163,18 @@ class handler(BaseHTTPRequestHandler):
                 hospital['distance'] = f"{distance_miles} miles"
                 hospital['lat'] = base_lat + lat_offset
                 hospital['lng'] = base_lng + lng_offset
-                hospital['address'] = f"{random.randint(100, 9999)} Medical Drive, {location}"
+                
+                # Generate realistic address based on location
+                city_name = "Unknown City"
+                if isinstance(location, dict):
+                    city_name = location.get('city', 'Unknown City')
+                elif isinstance(location, str) and location != "Not provided":
+                    city_name = location
+                
+                hospital['address'] = f"{random.randint(100, 9999)} Medical Drive, {city_name}"
                 hospital['phone'] = f"({random.randint(200, 999)}) {random.randint(200, 999)}-{random.randint(1000, 9999)}"
+                
+                print(f"🏥 Generated hospital: {hospital['name']} at ({hospital['lat']:.4f}, {hospital['lng']:.4f})")
                 
                 relevant_hospitals.append(hospital)
         
@@ -167,36 +184,72 @@ class handler(BaseHTTPRequestHandler):
         return relevant_hospitals[:4]  # Return top 4 hospitals
     
     def get_location_coordinates(self, location):
-        """Get coordinates for a given location string"""
+        """Get coordinates for a given location - handles both structured data and strings"""
         
         # Default coordinates (Los Angeles area as fallback)
         default_coords = (34.0522, -118.2437)
         
-        if not location or location == "Not provided":
+        if not location:
             return default_coords
         
-        # Simple location coordinate mapping for common areas
-        location_coords = {
-            "los angeles": (34.0522, -118.2437),
-            "new york": (40.7128, -74.0060),
-            "chicago": (41.8781, -87.6298),
-            "houston": (29.7604, -95.3698),
-            "phoenix": (33.4484, -112.0740),
-            "philadelphia": (39.9526, -75.1652),
-            "san antonio": (29.4241, -98.4936),
-            "san diego": (32.7157, -117.1611),
-            "dallas": (32.7767, -96.7970),
-            "san jose": (37.3382, -121.8863),
-        }
+        # Handle structured location data from frontend (preferred method)
+        if isinstance(location, dict):
+            latitude = location.get('latitude')
+            longitude = location.get('longitude')
+            
+            # If we have valid coordinates, use them
+            if latitude is not None and longitude is not None:
+                try:
+                    lat = float(latitude)
+                    lng = float(longitude)
+                    # Validate coordinates are reasonable
+                    if -90 <= lat <= 90 and -180 <= lng <= 180:
+                        print(f"✅ Using structured location coordinates: {lat}, {lng}")
+                        return (lat, lng)
+                except (ValueError, TypeError):
+                    print(f"⚠️ Invalid coordinate values: lat={latitude}, lng={longitude}")
+            
+            # Fallback to city name if coordinates not available
+            city = location.get('city', '')
+            if city:
+                location_string = city
+            else:
+                print("⚠️ No valid location data found in structured location object")
+                return default_coords
+        else:
+            # Handle string location data
+            location_string = str(location)
         
-        location_lower = location.lower()
-        
-        # Check for matches in the location string
-        for city, coords in location_coords.items():
-            if city in location_lower:
-                return coords
+        # String-based location matching (fallback)
+        if location_string and location_string != "Not provided":
+            location_coords = {
+                "los angeles": (34.0522, -118.2437),
+                "new york": (40.7128, -74.0060),
+                "chicago": (41.8781, -87.6298),
+                "houston": (29.7604, -95.3698),
+                "phoenix": (33.4484, -112.0740),
+                "philadelphia": (39.9526, -75.1652),
+                "san antonio": (29.4241, -98.4936),
+                "san diego": (32.7157, -117.1611),
+                "dallas": (32.7767, -96.7970),
+                "san jose": (37.3382, -121.8863),
+                "seattle": (47.6062, -122.3321),
+                "boston": (42.3601, -71.0589),
+                "denver": (39.7392, -104.9903),
+                "atlanta": (33.7490, -84.3880),
+                "miami": (25.7617, -80.1918)
+            }
+            
+            location_lower = location_string.lower()
+            
+            # Check for matches in the location string
+            for city, coords in location_coords.items():
+                if city in location_lower:
+                    print(f"✅ Using city-based coordinates for {city}: {coords}")
+                    return coords
         
         # If no match found, return default coordinates
+        print(f"⚠️ No location match found, using default coordinates: {default_coords}")
         return default_coords
     
     def calculate_hospital_relevance(self, hospital, injury_type):
@@ -258,7 +311,28 @@ class handler(BaseHTTPRequestHandler):
         
         # Weather considerations
         weather_note = ""
-        if weather and weather.get('temperature'):
+        current_location = "your area"
+        
+        # Get weather info from location data
+        if isinstance(location, dict):
+            weather_info = location.get('weather', {})
+            city_name = location.get('city', '')
+            if city_name:
+                current_location = city_name
+            
+            # Use weather from location object if available
+            if weather_info and weather_info.get('temperature'):
+                temp = weather_info.get('temperature', 70)
+                condition = weather_info.get('condition', '')
+                if temp > 85:
+                    weather_note = f"\n🌡️ Note: It's {temp}°F in {current_location} with {condition} - stay hydrated and consider the heat when traveling to the hospital."
+                elif temp < 40:
+                    weather_note = f"\n🌡️ Note: It's {temp}°F in {current_location} with {condition} - dress warmly and be careful of icy conditions when traveling."
+                else:
+                    weather_note = f"\n🌡️ Current weather in {current_location}: {temp}°F, {condition}"
+            
+        # Fallback to standalone weather data
+        elif weather and weather.get('temperature'):
             temp = weather.get('temperature', 70)
             if temp > 85:
                 weather_note = f"\n🌡️ Note: It's {temp}°F outside - stay hydrated and consider the heat when traveling to the hospital."
@@ -278,7 +352,7 @@ class handler(BaseHTTPRequestHandler):
         response = f"🏥 **Healthcare Recommendation**\n\n"
         response += f"**Assessment**: {advice}\n"
         response += weather_note
-        response += f"\n\n**Recommended Hospitals Near You:**{hospital_list}"
+        response += f"\n\n**Recommended Hospitals Near {current_location}:**{hospital_list}"
         response += f"\n💡 **Recommendation**: Based on your condition, I suggest visiting {hospitals[0]['name']} as it has relevant specialties and good availability.\n"
         response += f"\n📞 **Important**: If this is a medical emergency, please call 911 immediately."
         
