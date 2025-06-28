@@ -1,4 +1,5 @@
 {
+  "deploymentTimestamp": "2025-01-04T01:10:00Z",
   "rewrites": [
     {
       "source": "/api/(.*)",
