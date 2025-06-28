@@ -1,6 +1,6 @@
 {
-  "deploymentTimestamp": "2025-01-04T01:16:00Z",
-  "forceDeployment": true,
+  "version": 2,
+  "name": "healthcare-multi-agent-rag-system",
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -12,7 +12,8 @@
   },
   "build": {
     "env": {
-      "PYTHONPATH": "."
+      "PYTHONPATH": ".",
+      "NODE_ENV": "production"
     }
   }
 } 
