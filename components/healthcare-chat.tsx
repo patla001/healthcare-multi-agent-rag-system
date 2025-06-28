@@ -57,7 +57,7 @@ interface LocationData {
 }
 
 // Use environment variable for backend URL, fallback to Vercel serverless functions
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' ? '' : '');
 
 export default function HealthcareChat({ onHospitalRecommendations, onLocationUpdate }: HealthcareChatProps = {}) {
   const [messages, setMessages] = useState<Message[]>([

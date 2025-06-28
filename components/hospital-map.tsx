@@ -106,7 +106,7 @@ export default function HospitalMap({ userLocation, searchLocation, injuryType, 
   const [isClient, setIsClient] = useState(false);
 
   // Use environment variable for backend URL, fallback to Vercel serverless functions
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' ? '' : '');
 
   // Fetch hospitals from your backend
   const fetchHospitals = async (location: string) => {

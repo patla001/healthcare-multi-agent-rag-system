@@ -1,12 +1,6 @@
 {
   "version": 2,
   "name": "healthcare-multi-agent-rag-system",
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/python.py"
-    }
-  ],
   "env": {
     "NEXT_PUBLIC_BACKEND_URL": ""
   },
