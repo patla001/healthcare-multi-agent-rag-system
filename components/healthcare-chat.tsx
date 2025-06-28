@@ -56,8 +56,9 @@ interface LocationData {
   };
 }
 
-// Use environment variable for backend URL, fallback to Vercel serverless functions
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' ? '' : '');
+// Use environment variable for backend URL, with proper fallbacks for development and production
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
 
 export default function HealthcareChat({ onHospitalRecommendations, onLocationUpdate }: HealthcareChatProps = {}) {
   const [messages, setMessages] = useState<Message[]>([

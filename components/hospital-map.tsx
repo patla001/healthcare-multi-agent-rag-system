@@ -105,8 +105,9 @@ export default function HospitalMap({ userLocation, searchLocation, injuryType, 
   const [mapCenter, setMapCenter] = useState<[number, number]>([39.8283, -98.5795]); // Default to center of USA
   const [isClient, setIsClient] = useState(false);
 
-  // Use environment variable for backend URL, fallback to Vercel serverless functions
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' ? '' : '');
+  // Use environment variable for backend URL, with proper fallbacks for development and production
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 
+    (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
 
   // Fetch hospitals from your backend
   const fetchHospitals = async (location: string) => {
