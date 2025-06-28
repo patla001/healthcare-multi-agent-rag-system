@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, Hospital, Stethoscope, Clock, MapPin, Shield, Thermometer, Navigation } from "lucide-react";
+import { AlertCircle, Hospital, Stethoscope, Clock, MapPin, Shield, Thermometer, Navigation, Trash2 } from "lucide-react";
 import EnhancedRAGDisplay from "./enhanced-rag-display";
 
 // Hospital recommendation interface
@@ -61,13 +61,35 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ||
   (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
 
 export default function HealthcareChat({ onHospitalRecommendations, onLocationUpdate }: HealthcareChatProps = {}) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "system",
-      content: "🏥 Healthcare Multi-Agent System with Location Intelligence\n\nI'm specialized in helping you find the best hospitals for less severe injuries. I can evaluate staff performance, facility quality, and availability using real-time data.\n\n🎯 I focus on: Minor injuries, sprains, cuts, flu, infections, minor fractures, and urgent care needs.\n🌍 Location-aware: I consider your location and current weather for personalized recommendations.\n\n🔒 This system only handles healthcare-related queries.",
-      type: "healthcare"
+  // Chat history storage key
+  const CHAT_STORAGE_KEY = "healthcare-chat-history";
+  
+  // Initial system message
+  const INITIAL_SYSTEM_MESSAGE: Message = {
+    role: "system",
+    content: "🏥 Healthcare Multi-Agent System with Location Intelligence\n\nI'm specialized in helping you find the best hospitals for less severe injuries. I can evaluate staff performance, facility quality, and availability using real-time data.\n\n🎯 I focus on: Minor injuries, sprains, cuts, flu, infections, minor fractures, and urgent care needs.\n🌍 Location-aware: I consider your location and current weather for personalized recommendations.\n\n🔒 This system only handles healthcare-related queries.",
+    type: "healthcare"
+  };
+
+  // Load messages from localStorage or use initial message
+  const loadMessages = (): Message[] => {
+    try {
+      const savedMessages = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages);
+        // Ensure we always have the system message at the start
+        if (parsed.length === 0 || parsed[0].role !== "system") {
+          return [INITIAL_SYSTEM_MESSAGE, ...parsed];
+        }
+        return parsed;
+      }
+    } catch (error) {
+      console.error("Error loading chat history:", error);
     }
-  ]);
+    return [INITIAL_SYSTEM_MESSAGE];
+  };
+
+  const [messages, setMessages] = useState<Message[]>(loadMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [backendStatus, setBackendStatus] = useState<"connected" | "disconnected" | "checking">("checking");
@@ -75,6 +97,15 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    } catch (error) {
+      console.error("Error saving chat history:", error);
+    }
+  }, [messages]);
 
   // Check backend status and get location on component mount
   useEffect(() => {
@@ -84,9 +115,9 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
 
   const checkBackendStatus = async () => {
     try {
-      console.log('Checking backend status at:', `${BACKEND_URL}/health`);
+      console.log('Checking backend status at:', `${BACKEND_URL}/api/health`);
       setBackendError(null);
-      const response = await fetch(`${BACKEND_URL}/health`);
+      const response = await fetch(`${BACKEND_URL}/api/health`);
       console.log('Backend response status:', response.status);
       if (response.ok) {
         const data = await response.json();
@@ -327,8 +358,8 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
       
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.message.content,
-        type: data.message.type || "healthcare",
+        content: data.content,
+        type: data.type || "healthcare",
         data_sources: data.data_sources,
         guardrail_triggered: data.guardrail_triggered,
         rag_context: data.rag_context
@@ -384,7 +415,7 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
           } else {
             // Fallback to parsing from text content
             console.log('📝 No structured data, parsing from text content');
-            hospitals = parseHospitalRecommendations(data.message.content);
+            hospitals = parseHospitalRecommendations(data.content);
           }
           
           console.log('🏥 Final hospitals to display:', hospitals);
@@ -455,6 +486,15 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
     }
   };
 
+  const clearChatHistory = () => {
+    try {
+      localStorage.removeItem(CHAT_STORAGE_KEY);
+      setMessages([INITIAL_SYSTEM_MESSAGE]);
+    } catch (error) {
+      console.error("Error clearing chat history:", error);
+    }
+  };
+
 
 
   return (
@@ -515,6 +555,17 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
                 <Button variant="outline" size="sm" onClick={checkBackendStatus}>
                   Test Connection
                 </Button>
+                {messages.length > 1 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={clearChatHistory}
+                    className="ml-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Clear chat history"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>

@@ -22,14 +22,14 @@ export interface RecommendedHospital {
   urgentCare?: boolean;
 }
 
-// Dynamically import the map component to avoid SSR issues
-const HospitalMap = dynamic(() => import('@/components/hospital-map'), {
+// Dynamically import the location map component to avoid SSR issues
+const LocationMap = dynamic(() => import('@/components/hospital-map'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading map...</p>
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading location map...</p>
       </div>
     </div>
   )
@@ -38,7 +38,6 @@ const HospitalMap = dynamic(() => import('@/components/hospital-map'), {
 export default function HealthcarePage() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'map'>('dashboard');
   const [searchLocation, setSearchLocation] = useState('Los Angeles, CA');
-  const [injuryType, setInjuryType] = useState('general');
   const [recommendedHospitals, setRecommendedHospitals] = useState<RecommendedHospital[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -91,37 +90,37 @@ export default function HealthcarePage() {
               onClick={() => setActiveTab('map')}
               className="rounded-md px-6 py-3 ml-1 text-sm font-medium transition-all duration-200"
             >
-              🗺️ Hospital Map Endpoint
+              📍 Location Benchmark
               {recommendedHospitals.length > 0 && (
-                <Badge className="ml-2 bg-red-500 text-white animate-pulse">
-                  {recommendedHospitals.length}
+                <Badge className="ml-2 bg-blue-500 text-white animate-pulse">
+                  Chat Results
                 </Badge>
               )}
             </Button>
           </div>
         </div>
 
-        {/* Hospital Recommendations Notification */}
+        {/* AI Chat Results Notification */}
         {recommendedHospitals.length > 0 && (
           <div className="mb-6">
-            <Card className="border-yellow-200 bg-yellow-50">
+            <Card className="border-blue-200 bg-blue-50">
               <div className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="text-2xl">⭐</div>
+                    <div className="text-2xl">💬</div>
                     <div>
-                      <h3 className="font-semibold text-yellow-800">
-                        AI Hospital Recommendations Ready!
+                      <h3 className="font-semibold text-blue-800">
+                        AI Chat Results Available!
                       </h3>
-                      <p className="text-sm text-yellow-700">
-                        Found {recommendedHospitals.length} recommended hospitals based on your query. 
+                      <p className="text-sm text-blue-700">
+                        Healthcare AI has provided {recommendedHospitals.length} hospital recommendations based on your query. 
                         {activeTab !== 'map' ? (
                           <span>
-                            {' '}Switch to the <strong>Hospital Map Endpoint</strong> to see them visualized on the map.
+                            {' '}You can now use the <strong>Location Benchmark</strong> to find the optimal location for your needs.
                           </span>
                         ) : (
                           <span>
-                            {' '}Look for the highlighted star markers on the map below.
+                            {' '}Use the location search below to benchmark different areas.
                           </span>
                         )}
                       </p>
@@ -130,9 +129,9 @@ export default function HealthcarePage() {
                   {activeTab !== 'map' && (
                     <Button
                       onClick={() => setActiveTab('map')}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                      View on Map 🗺️
+                      Location Benchmark 📍
                     </Button>
                   )}
                 </div>
@@ -162,7 +161,7 @@ export default function HealthcarePage() {
                     onClick={() => setActiveTab('map')}
                     className="bg-white text-purple-600 hover:bg-purple-50 font-medium px-6 py-2"
                   >
-                    Explore Map 🗺️
+                    Location Benchmark 📍
                   </Button>
                 </div>
               </div>
@@ -284,13 +283,13 @@ export default function HealthcarePage() {
           </div>
         )}
 
-        {/* Hospital Map Endpoint Content */}
+        {/* Location Benchmark Content */}
         {activeTab === 'map' && (
           <div className="space-y-6">
             <Card className="p-6 bg-green-50 border-green-200">
-              <h2 className="text-2xl font-bold text-green-800 mb-2">🗺️ Hospital Map Endpoint</h2>
+              <h2 className="text-2xl font-bold text-green-800 mb-2">📍 Location Benchmark Tool</h2>
               <p className="text-green-700">
-                Global hospital mapping with weather integration and location benchmarking capabilities.
+                Interactive location benchmarking with weather integration and global positioning capabilities. Search any location worldwide to analyze conditions and set your reference point.
               </p>
             </Card>
 
@@ -361,26 +360,24 @@ export default function HealthcarePage() {
                   </div>
                 </div>
 
-                {/* Injury Type Selection */}
+                {/* Location Info */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    🏥 Care Type
+                    🎯 Benchmark Status
                   </label>
-                  <select
-                    value={injuryType}
-                    onChange={(e) => setInjuryType(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="general">General Care</option>
-                    <option value="emergency">Emergency</option>
-                    <option value="urgent care">Urgent Care</option>
-                    <option value="sprain">Sprains & Strains</option>
-                    <option value="minor fracture">Minor Fractures</option>
-                    <option value="cut">Cuts & Wounds</option>
-                    <option value="burn">Minor Burns</option>
-                    <option value="allergy">Allergic Reactions</option>
-                    <option value="flu">Flu & Infections</option>
-                  </select>
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+                    <div className="text-sm text-gray-700">
+                      <div className="font-medium">Current Location:</div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        {searchLocation}
+                      </div>
+                      {userLocation && (
+                        <div className="text-xs text-green-600 mt-1">
+                          ✓ GPS coordinates available
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Location Options */}
@@ -444,24 +441,27 @@ export default function HealthcarePage() {
               </div>
             </Card>
 
-            {/* Map Display */}
+            {/* Location Benchmark Map */}
+            <LocationMap
+              searchLocation={searchLocation}
+              userLocation={userLocation || undefined}
+              onLocationChange={(location) => {
+                console.log('Location changed:', location);
+                setUserLocation({ lat: location.lat, lng: location.lng });
+              }}
+            />
+
+            {/* Map Display Info */}
             <Card className="p-6">
               <div className="mb-4">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                  Hospital Locations & Weather Analysis
+                  Location Analysis & Weather Integration
                 </h2>
                 <p className="text-gray-600">
-                  Interactive map showing hospitals and real-time weather data for <strong>{searchLocation}</strong>. 
-                  Click markers for detailed facility information and recommendations.
+                  Interactive location benchmark showing real-time weather data and positioning for <strong>{searchLocation}</strong>. 
+                  Use the search tools above to change your benchmark location and analyze different areas worldwide.
                 </p>
               </div>
-              
-              <HospitalMap
-                searchLocation={searchLocation}
-                injuryType={injuryType}
-                userLocation={userLocation || undefined}
-                recommendedHospitals={recommendedHospitals}
-              />
             </Card>
 
             {/* Location Benchmarking Stats */}
@@ -532,14 +532,14 @@ export default function HealthcarePage() {
               </div>
             </Card>
 
-            {/* Map Features */}
+            {/* Location Benchmark Features */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="p-6">
                 <div className="text-center">
-                  <div className="text-3xl mb-3">🏥</div>
-                  <h3 className="font-semibold text-lg mb-2">Hospital Benchmarking</h3>
+                  <div className="text-3xl mb-3">📍</div>
+                  <h3 className="font-semibold text-lg mb-2">Precision Positioning</h3>
                   <p className="text-gray-600 text-sm">
-                    Compare ratings, services, contact info, and real-time availability across locations
+                    Set precise location benchmarks with GPS coordinates and address-based search capabilities
                   </p>
                 </div>
               </Card>
@@ -549,17 +549,17 @@ export default function HealthcarePage() {
                   <div className="text-3xl mb-3">🌍</div>
                   <h3 className="font-semibold text-lg mb-2">Global Weather Integration</h3>
                   <p className="text-gray-600 text-sm">
-                    Analyze weather conditions, temperature, and environmental health factors worldwide
+                    Real-time weather analysis for any location worldwide with temperature, humidity, and conditions
                   </p>
                 </div>
               </Card>
 
               <Card className="p-6">
                 <div className="text-center">
-                  <div className="text-3xl mb-3">📊</div>
-                  <h3 className="font-semibold text-lg mb-2">Location Analytics</h3>
+                  <div className="text-3xl mb-3">🔍</div>
+                  <h3 className="font-semibold text-lg mb-2">Smart Location Search</h3>
                   <p className="text-gray-600 text-sm">
-                    AI-powered insights for healthcare accessibility and quality by geographic region
+                    Advanced geocoding with support for addresses, coordinates, and location-based recommendations
                   </p>
                 </div>
               </Card>

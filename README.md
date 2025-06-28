@@ -675,7 +675,375 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## 🚀 Vercel Production Deployment
+
+This section provides comprehensive instructions for deploying the **Healthcare Multi-Agent System** to Vercel production with full Next.js frontend and Python backend integration.
+
+### 📋 Deployment Overview
+
+This application uses a **hybrid architecture**:
+- **Frontend**: Next.js app deployed to Vercel's Edge Network
+- **Backend**: Python FastAPI functions deployed as Vercel Serverless Functions
+- **Integration**: Seamless API routing with automatic scaling
+
+### 🔧 Prerequisites
+
+Before deploying to Vercel, ensure you have:
+
+1. **Vercel Account**: Sign up at [vercel.com](https://vercel.com)
+2. **Vercel CLI**: Install globally for deployment management
+   ```bash
+   npm install -g vercel
+   ```
+3. **Git Repository**: Code pushed to GitHub, GitLab, or Bitbucket
+4. **API Keys**: Required environment variables (OpenAI, etc.)
+5. **Domain** (Optional): Custom domain for production use
+
+### 🛠️ Step-by-Step Deployment Guide
+
+#### Step 1: Prepare Your Repository
+
+**1.1 Ensure all files are committed:**
+```bash
+git add .
+git commit -m "Prepare for Vercel deployment"
+git push origin main
+```
+
+**1.2 Verify project structure:**
+```
+agent-next-typescript/
+├── api/                    # Python backend functions
+│   ├── health.py          # Health check endpoint
+│   ├── healthcare-chat.py # Healthcare AI endpoint
+│   ├── geocode.py         # Location services
+│   ├── weather/
+│   │   └── current.py     # Weather API
+│   └── hospitals/
+│       └── locations.py   # Hospital finder
+├── app/                   # Next.js frontend
+├── components/            # React components
+├── vercel.json           # Vercel configuration
+├── requirements.txt      # Python dependencies
+└── package.json          # Node.js dependencies
+```
+
+#### Step 2: Configure Environment Variables
+
+**2.1 Create production environment configuration:**
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `OPENAI_API_KEY` | ✅ | OpenAI API key for AI features | `sk-...` |
+| `NEXT_PUBLIC_BACKEND_URL` | ⚠️ | Backend URL (auto-set by Vercel) | `` (leave empty) |
+| `LANGSMITH_API_KEY` | ⭕ | LangSmith monitoring (optional) | `ls__...` |
+| `WEATHER_API_KEY` | ⭕ | Weather service (optional) | `...` |
+
+> **⚠️ Important**: For Vercel deployment, leave `NEXT_PUBLIC_BACKEND_URL` empty - Vercel automatically handles API routing.
+
+#### Step 3: Deploy to Vercel
+
+**Option A: Automatic Deployment (Recommended)**
+
+1. **Connect Repository to Vercel:**
+   - Go to [vercel.com/new](https://vercel.com/new)
+   - Import your Git repository
+   - Select the project root directory
+
+2. **Configure Project Settings:**
+   - **Framework Preset**: Next.js
+   - **Root Directory**: `./` (project root)
+   - **Build Command**: `npm run build` (auto-detected)
+   - **Output Directory**: `.next` (auto-detected)
+
+3. **Add Environment Variables:**
+   ```bash
+   # In Vercel Dashboard → Project → Settings → Environment Variables
+   OPENAI_API_KEY=your_openai_api_key_here
+   LANGSMITH_API_KEY=your_langsmith_key_here  # Optional
+   ```
+
+4. **Deploy:**
+   - Click "Deploy"
+   - Vercel will automatically build and deploy your application
+
+**Option B: CLI Deployment**
+
+1. **Login to Vercel:**
+   ```bash
+   vercel login
+   ```
+
+2. **Configure and Deploy:**
+   ```bash
+   # First deployment (interactive setup)
+   vercel
+
+   # Follow prompts:
+   # Set up and deploy? [Y/n] Y
+   # Which scope? [your-username]
+   # Link to existing project? [y/N] N
+   # Project name: [agent-next-typescript] 
+   # Directory: [./] 
+   ```
+
+3. **Set Environment Variables:**
+   ```bash
+   # Add required environment variables
+   vercel env add OPENAI_API_KEY
+   # Enter value when prompted
+
+   # Optional: Add other variables
+   vercel env add LANGSMITH_API_KEY
+   ```
+
+4. **Deploy to Production:**
+   ```bash
+   vercel --prod
+   ```
+
+#### Step 4: Verify Deployment
+
+**4.1 Check Frontend:**
+- Visit your Vercel deployment URL (e.g., `https://your-app.vercel.app`)
+- Navigate to `/healthcare` to test the healthcare system
+- Verify the location benchmark at `/healthcare` (map tab)
+- Test the AI chat functionality
+
+**4.2 Verify API Endpoints:**
+```bash
+# Test health endpoint
+curl https://your-app.vercel.app/api/health
+
+# Expected response:
+{
+  "status": "healthy",
+  "openai_available": true,
+  "rag_simulation": true,
+  "backend_status": "healthy"
+}
+
+# Test healthcare chat
+curl -X POST https://your-app.vercel.app/api/healthcare-chat \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "Find hospitals for sprained ankle"}]}'
+```
+
+**4.3 Test Location Services:**
+```bash
+# Test weather API
+curl -X POST https://your-app.vercel.app/api/weather/current \
+  -H "Content-Type: application/json" \
+  -d '{"lat": 34.0522, "lon": -118.2437}'
+
+# Test hospital locations
+curl -X POST https://your-app.vercel.app/api/hospitals/locations \
+  -H "Content-Type: application/json" \
+  -d '{"location": "Los Angeles, CA"}'
+```
+
+#### Step 5: Configure Custom Domain (Optional)
+
+**5.1 Add Custom Domain:**
+1. Go to Vercel Dashboard → Project → Settings → Domains
+2. Add your custom domain (e.g., `healthcare.yourdomain.com`)
+3. Configure DNS records as instructed by Vercel
+
+**5.2 Update Environment Variables:**
+```bash
+# Update any environment variables that reference your domain
+vercel env add NEXT_PUBLIC_SITE_URL
+# Enter: https://healthcare.yourdomain.com
+```
+
+### 🔍 Post-Deployment Configuration
+
+#### Disable Vercel Authentication (Important!)
+
+By default, Vercel may enable deployment protection. To make your app publicly accessible:
+
+1. **Vercel Dashboard** → Your Project → **Settings** → **General**
+2. Scroll to **"Deployment Protection"**
+3. **Disable** "Password Protection" and "Vercel Authentication"
+4. **Save** changes
+
+> **⚠️ Critical**: Without disabling deployment protection, users will get authentication prompts when accessing your app.
+
+#### Performance Optimization
+
+**Enable Edge Runtime (Optional):**
+```javascript
+// In your API routes, add:
+export const runtime = 'edge'
+```
+
+**Configure Caching:**
+```javascript
+// In next.config.ts, add:
+const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 's-maxage=60, stale-while-revalidate' }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 📊 Monitoring & Maintenance
+
+#### Vercel Analytics
+
+1. Enable **Vercel Analytics** in your project dashboard
+2. Monitor performance metrics and user interactions
+3. Track API response times and error rates
+
+#### Error Monitoring
+
+**Monitor Function Logs:**
+```bash
+# View real-time logs
+vercel logs --follow
+
+# View specific function logs
+vercel logs --function=api/healthcare-chat
+```
+
+**LangSmith Integration:**
+If using LangSmith, monitor your deployment:
+- View API calls and performance in LangSmith dashboard
+- Track healthcare query patterns and response quality
+- Monitor OpenAI usage and costs
+
+### 🚨 Troubleshooting
+
+#### Common Issues & Solutions
+
+**1. API Endpoints Return 404:**
+```bash
+# Check if Python files are in correct location
+ls api/
+# Should show: health.py, healthcare-chat.py, etc.
+
+# Verify vercel.json configuration
+cat vercel.json
+```
+
+**2. Environment Variables Not Working:**
+```bash
+# List all environment variables
+vercel env ls
+
+# Check if variables are set for production
+vercel env ls --environment=production
+```
+
+**3. OpenAI API Errors:**
+```bash
+# Test API key locally first
+curl -H "Authorization: Bearer $OPENAI_API_KEY" \
+  https://api.openai.com/v1/models
+```
+
+**4. Function Timeout Issues:**
+- Increase timeout in `vercel.json`:
+```json
+{
+  "functions": {
+    "api/**/*.py": {
+      "maxDuration": 30
+    }
+  }
+}
+```
+
+**5. Memory Issues:**
+```json
+{
+  "functions": {
+    "api/**/*.py": {
+      "memory": 1024
+    }
+  }
+}
+```
+
+#### Debug Commands
+
+```bash
+# Check deployment status
+vercel ls
+
+# Get deployment details
+vercel inspect [deployment-url]
+
+# View build logs
+vercel logs [deployment-url]
+
+# Redeploy specific deployment
+vercel rollback [deployment-url]
+```
+
+### 🔄 Continuous Deployment
+
+#### Automatic Deployments
+
+Once connected to Git, Vercel automatically:
+- **Deploys** every push to main branch
+- **Creates** preview deployments for pull requests
+- **Runs** build checks and tests
+
+#### Deployment Hooks
+
+Set up webhooks for external integrations:
+```bash
+# Add deployment webhook
+vercel integration add webhook --url https://your-webhook-url.com
+```
+
+### 📈 Scaling Considerations
+
+#### Function Limits
+
+- **Execution Time**: 30 seconds max (Hobby), 300 seconds (Pro)
+- **Memory**: 1024 MB max (Hobby), 3008 MB (Pro)
+- **Payload Size**: 4.5 MB max request body
+
+#### Rate Limiting
+
+Implement rate limiting for production:
+```python
+# In your Python API functions
+from functools import lru_cache
+import time
+
+@lru_cache(maxsize=100)
+def rate_limit_check(ip_address, timestamp_minute):
+    # Simple in-memory rate limiting
+    return True
+```
+
+---
+
+### 🎯 Quick Deployment Checklist
+
+- [ ] Repository pushed to Git provider
+- [ ] `vercel.json` configured correctly
+- [ ] `requirements.txt` includes all Python dependencies
+- [ ] Environment variables set in Vercel dashboard
+- [ ] Deployment protection disabled (for public access)
+- [ ] API endpoints tested and working
+- [ ] Frontend navigation verified
+- [ ] Healthcare chat functionality tested
+- [ ] Location services working
+- [ ] Custom domain configured (if applicable)
+- [ ] Monitoring and analytics enabled
+
+## Deploy on Vercel (Basic)
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 

@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "healthcare-multi-agent-rag-system",
   "env": {
     "NEXT_PUBLIC_BACKEND_URL": "",
     "NODE_ENV": "production"

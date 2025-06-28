@@ -15,7 +15,7 @@ class handler(BaseHTTPRequestHandler):
             "status": "healthy",
             "service": "Healthcare Multi-Agent Backend",
             "version": "1.0.0",
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "features": {
                 "openai_available": True,
                 "rag_simulation": True,
