@@ -22,14 +22,14 @@ export interface RecommendedHospital {
   urgentCare?: boolean;
 }
 
-// Dynamically import the location map component to avoid SSR issues
-const LocationMap = dynamic(() => import('@/components/hospital-map'), {
+// Dynamically import the dual benchmark map component to avoid SSR issues
+const DualBenchmarkMap = dynamic(() => import('@/components/hospital-map'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading location map...</p>
+        <p className="text-gray-600">Loading dual benchmark map...</p>
       </div>
     </div>
   )
@@ -90,37 +90,37 @@ export default function HealthcarePage() {
               onClick={() => setActiveTab('map')}
               className="rounded-md px-6 py-3 ml-1 text-sm font-medium transition-all duration-200"
             >
-              📍 Location Benchmark
+              🗺️ Dual Benchmarks
               {recommendedHospitals.length > 0 && (
-                <Badge className="ml-2 bg-blue-500 text-white animate-pulse">
-                  Chat Results
+                <Badge className="ml-2 bg-red-500 text-white animate-pulse">
+                  {recommendedHospitals.length} Hospitals
                 </Badge>
               )}
             </Button>
           </div>
         </div>
 
-        {/* AI Chat Results Notification */}
+        {/* Hospital Benchmarks Available Notification */}
         {recommendedHospitals.length > 0 && (
           <div className="mb-6">
-            <Card className="border-blue-200 bg-blue-50">
+            <Card className="border-red-200 bg-red-50">
               <div className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="text-2xl">💬</div>
+                    <div className="text-2xl">🏥</div>
                     <div>
-                      <h3 className="font-semibold text-blue-800">
-                        AI Chat Results Available!
+                      <h3 className="font-semibold text-red-800">
+                        Hospital Benchmarks Ready!
                       </h3>
-                      <p className="text-sm text-blue-700">
-                        Healthcare AI has provided {recommendedHospitals.length} hospital recommendations based on your query. 
+                      <p className="text-sm text-red-700">
+                        Healthcare AI has provided {recommendedHospitals.length} hospital recommendations that are now available as benchmarks. 
                         {activeTab !== 'map' ? (
                           <span>
-                            {' '}You can now use the <strong>Location Benchmark</strong> to find the optimal location for your needs.
+                            {' '}View them on the <strong>Dual Benchmarks</strong> map with your location for comparison.
                           </span>
                         ) : (
                           <span>
-                            {' '}Use the location search below to benchmark different areas.
+                            {' '}Red hospital markers show AI-recommended locations alongside your blue location benchmark.
                           </span>
                         )}
                       </p>
@@ -129,9 +129,9 @@ export default function HealthcarePage() {
                   {activeTab !== 'map' && (
                     <Button
                       onClick={() => setActiveTab('map')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="bg-red-600 hover:bg-red-700 text-white"
                     >
-                      Location Benchmark 📍
+                      View Benchmarks 🗺️
                     </Button>
                   )}
                 </div>
@@ -441,11 +441,12 @@ export default function HealthcarePage() {
               </div>
             </Card>
 
-            {/* Location Benchmark Map */}
-            <LocationMap
+            {/* Dual Benchmark Map */}
+            <DualBenchmarkMap
               searchLocation={searchLocation}
               userLocation={userLocation || undefined}
-              onLocationChange={(location) => {
+              recommendedHospitals={recommendedHospitals}
+              onLocationChange={(location: { lat: number; lng: number; address: string }) => {
                 console.log('Location changed:', location);
                 setUserLocation({ lat: location.lat, lng: location.lng });
               }}

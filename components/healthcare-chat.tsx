@@ -397,20 +397,20 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
           let hospitals: RecommendedHospital[] = [];
           
           // First try to use structured hospital data from backend
-          if (data.hospitals && data.hospitals.length > 0) {
-            console.log('🏥 Using structured hospital data from backend:', data.hospitals);
-            hospitals = data.hospitals.map((hospital: any) => ({
+          if (data.hospital_recommendations && data.hospital_recommendations.length > 0) {
+            console.log('🏥 Using structured hospital data from backend:', data.hospital_recommendations);
+            hospitals = data.hospital_recommendations.map((hospital: any) => ({
               name: hospital.name,
               distance: hospital.distance || 'Distance not specified',
               rating: hospital.rating ? `${hospital.rating}/5` : '4.0/5',
               wait_time: hospital.wait_time || '20-30 min',
-              specialties: hospital.services || ['General Care', 'Emergency Services'],
-              lat: hospital.coordinates?.lat || (locationData?.latitude || 34.0522) + (Math.random() - 0.5) * 0.1,
-              lng: hospital.coordinates?.lng || (locationData?.longitude || -118.2437) + (Math.random() - 0.5) * 0.1,
+              specialties: hospital.specialties || ['General Care', 'Emergency Services'],
+              lat: hospital.lat || (locationData?.latitude || 34.0522) + (Math.random() - 0.5) * 0.1,
+              lng: hospital.lng || (locationData?.longitude || -118.2437) + (Math.random() - 0.5) * 0.1,
               address: hospital.address || `${Math.floor(Math.random() * 9999)} Healthcare Blvd, ${locationData?.city || 'Los Angeles'}, CA`,
               phone: hospital.phone || `(${Math.floor(Math.random() * 900) + 100}) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
               emergency: hospital.emergency || true,
-              urgentCare: hospital.urgent_care || true
+              urgentCare: hospital.urgentCare || true
             }));
           } else {
             // Fallback to parsing from text content

@@ -79,6 +79,7 @@ class handler(BaseHTTPRequestHandler):
             "content": response_content,
             "type": "healthcare",
             "data_sources": ["hospital_database", "location_services", "weather_api"],
+            "hospital_recommendations": hospitals,  # Add hospital data for map display
             "rag_context": {
                 "documents_used": random.randint(3, 8),
                 "openai_enhanced": True,
@@ -93,53 +94,110 @@ class handler(BaseHTTPRequestHandler):
     def generate_hospital_recommendations(self, injury_type, location, weather):
         """Generate hospital recommendations based on injury type and location"""
         
+        # Parse location coordinates - try to get lat/lng from location string
+        base_lat, base_lng = self.get_location_coordinates(location)
+        
         # Hospital templates with different specialties
         hospital_data = [
             {
                 "name": "City General Hospital",
                 "specialties": ["Emergency Medicine", "Orthopedics", "Internal Medicine"],
-                "rating": "4.2/5",
-                "wait_time": "15-45 min"
+                "rating": "4.2",
+                "wait_time": "15-45 min",
+                "emergency": True,
+                "urgentCare": False
             },
             {
                 "name": "Regional Medical Center", 
                 "specialties": ["Trauma Care", "Emergency Medicine", "Surgery"],
-                "rating": "4.5/5",
-                "wait_time": "20-60 min"
+                "rating": "4.5",
+                "wait_time": "20-60 min",
+                "emergency": True,
+                "urgentCare": False
             },
             {
                 "name": "Urgent Care Plus",
                 "specialties": ["Urgent Care", "Family Medicine", "Minor Injuries"],
-                "rating": "4.0/5", 
-                "wait_time": "10-30 min"
+                "rating": "4.0", 
+                "wait_time": "10-30 min",
+                "emergency": False,
+                "urgentCare": True
             },
             {
                 "name": "University Medical Center",
                 "specialties": ["Cardiology", "Emergency Medicine", "Specialized Care"],
-                "rating": "4.7/5",
-                "wait_time": "25-75 min"
+                "rating": "4.7",
+                "wait_time": "25-75 min",
+                "emergency": True,
+                "urgentCare": False
             },
             {
                 "name": "FastCare Clinic",
                 "specialties": ["Walk-in Care", "Minor Injuries", "Preventive Care"],
-                "rating": "3.8/5",
-                "wait_time": "5-20 min"
+                "rating": "3.8",
+                "wait_time": "5-20 min",
+                "emergency": False,
+                "urgentCare": True
             }
         ]
         
         # Filter and rank hospitals based on injury type
         relevant_hospitals = []
-        for hospital in hospital_data:
+        for i, hospital in enumerate(hospital_data):
             relevance_score = self.calculate_hospital_relevance(hospital, injury_type)
             if relevance_score > 0.3:  # Only include relevant hospitals
+                distance_miles = round(random.uniform(0.8, 12.5), 1)
+                
+                # Generate coordinates around the base location
+                lat_offset = random.uniform(-0.05, 0.05)  # ~3-4 miles radius
+                lng_offset = random.uniform(-0.05, 0.05)
+                
                 hospital['relevance'] = relevance_score
-                hospital['distance'] = f"{round(random.uniform(0.8, 12.5), 1)} miles away"
+                hospital['distance'] = f"{distance_miles} miles"
+                hospital['lat'] = base_lat + lat_offset
+                hospital['lng'] = base_lng + lng_offset
+                hospital['address'] = f"{random.randint(100, 9999)} Medical Drive, {location}"
+                hospital['phone'] = f"({random.randint(200, 999)}) {random.randint(200, 999)}-{random.randint(1000, 9999)}"
+                
                 relevant_hospitals.append(hospital)
         
         # Sort by relevance score (descending)
         relevant_hospitals.sort(key=lambda x: x['relevance'], reverse=True)
         
         return relevant_hospitals[:4]  # Return top 4 hospitals
+    
+    def get_location_coordinates(self, location):
+        """Get coordinates for a given location string"""
+        
+        # Default coordinates (Los Angeles area as fallback)
+        default_coords = (34.0522, -118.2437)
+        
+        if not location or location == "Not provided":
+            return default_coords
+        
+        # Simple location coordinate mapping for common areas
+        location_coords = {
+            "los angeles": (34.0522, -118.2437),
+            "new york": (40.7128, -74.0060),
+            "chicago": (41.8781, -87.6298),
+            "houston": (29.7604, -95.3698),
+            "phoenix": (33.4484, -112.0740),
+            "philadelphia": (39.9526, -75.1652),
+            "san antonio": (29.4241, -98.4936),
+            "san diego": (32.7157, -117.1611),
+            "dallas": (32.7767, -96.7970),
+            "san jose": (37.3382, -121.8863),
+        }
+        
+        location_lower = location.lower()
+        
+        # Check for matches in the location string
+        for city, coords in location_coords.items():
+            if city in location_lower:
+                return coords
+        
+        # If no match found, return default coordinates
+        return default_coords
     
     def calculate_hospital_relevance(self, hospital, injury_type):
         """Calculate how relevant a hospital is for a specific injury type"""
@@ -211,8 +269,9 @@ class handler(BaseHTTPRequestHandler):
         hospital_list = ""
         for i, hospital in enumerate(hospitals, 1):
             specialties_str = ", ".join(hospital['specialties'][:2])  # Show first 2 specialties
+            rating_display = f"{hospital['rating']}/5"
             hospital_list += f"\n{i}. **{hospital['name']}** - {hospital['distance']}\n"
-            hospital_list += f"   - Rating: {hospital['rating']}, Wait: {hospital['wait_time']}\n"
+            hospital_list += f"   - Rating: {rating_display}, Wait: {hospital['wait_time']}\n"
             hospital_list += f"   - Specialties: {specialties_str}\n"
         
         # Construct full response
