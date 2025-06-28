@@ -7,5 +7,10 @@
   ],
   "env": {
     "NEXT_PUBLIC_BACKEND_URL": ""
+  },
+  "build": {
+    "env": {
+      "PYTHONPATH": "."
+    }
   }
 } 
