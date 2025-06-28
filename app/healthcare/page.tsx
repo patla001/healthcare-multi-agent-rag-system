@@ -36,7 +36,7 @@ const HospitalMap = dynamic(() => import('@/components/hospital-map'), {
 });
 
 export default function HealthcarePage() {
-  const [activeTab, setActiveTab] = useState<'chat' | 'map'>('chat');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'map'>('dashboard');
   const [searchLocation, setSearchLocation] = useState('Los Angeles, CA');
   const [injuryType, setInjuryType] = useState('general');
   const [recommendedHospitals, setRecommendedHospitals] = useState<RecommendedHospital[]>([]);
@@ -69,24 +69,31 @@ export default function HealthcarePage() {
           </p>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Enhanced Dashboard Navigation */}
         <div className="flex justify-center mb-8">
-          <div className="bg-white rounded-lg p-1 shadow-sm border">
+          <div className="bg-white rounded-lg p-1 shadow-lg border-2 border-blue-100">
+            <Button
+              variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('dashboard')}
+              className="rounded-md px-6 py-3 text-sm font-medium transition-all duration-200"
+            >
+              🏠 Dashboard
+            </Button>
             <Button
               variant={activeTab === 'chat' ? 'default' : 'ghost'}
               onClick={() => setActiveTab('chat')}
-              className="rounded-md px-6 py-2"
+              className="rounded-md px-6 py-3 ml-1 text-sm font-medium transition-all duration-200"
             >
-              💬 AI Healthcare Chat
+              💬 AI Chat Endpoint
             </Button>
             <Button
               variant={activeTab === 'map' ? 'default' : 'ghost'}
               onClick={() => setActiveTab('map')}
-              className="rounded-md px-6 py-2 ml-1"
+              className="rounded-md px-6 py-3 ml-1 text-sm font-medium transition-all duration-200"
             >
-              🗺️ Hospital Map & Weather
+              🗺️ Hospital Map Endpoint
               {recommendedHospitals.length > 0 && (
-                <Badge className="ml-2 bg-yellow-500 text-white">
+                <Badge className="ml-2 bg-red-500 text-white animate-pulse">
                   {recommendedHospitals.length}
                 </Badge>
               )}
@@ -108,9 +115,9 @@ export default function HealthcarePage() {
                       </h3>
                       <p className="text-sm text-yellow-700">
                         Found {recommendedHospitals.length} recommended hospitals based on your query. 
-                        {activeTab === 'chat' ? (
+                        {activeTab !== 'map' ? (
                           <span>
-                            {' '}Switch to the <strong>Hospital Map</strong> tab to see them visualized on the map.
+                            {' '}Switch to the <strong>Hospital Map Endpoint</strong> to see them visualized on the map.
                           </span>
                         ) : (
                           <span>
@@ -120,7 +127,7 @@ export default function HealthcarePage() {
                       </p>
                     </div>
                   </div>
-                  {activeTab === 'chat' && (
+                  {activeTab !== 'map' && (
                     <Button
                       onClick={() => setActiveTab('map')}
                       className="bg-yellow-600 hover:bg-yellow-700 text-white"
@@ -134,9 +141,111 @@ export default function HealthcarePage() {
           </div>
         )}
 
-        {/* Tab Content */}
+        {/* Dashboard Content */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-8">
+            {/* System Overview */}
+            <Card className="p-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+              <div className="text-center">
+                <h2 className="text-3xl font-bold mb-4">🎯 Healthcare System Dashboard</h2>
+                <p className="text-xl text-blue-100 mb-6">
+                  Comprehensive healthcare assistance powered by multiple AI agents
+                </p>
+                <div className="flex justify-center space-x-4">
+                  <Button
+                    onClick={() => setActiveTab('chat')}
+                    className="bg-white text-blue-600 hover:bg-blue-50 font-medium px-6 py-2"
+                  >
+                    Start AI Chat 💬
+                  </Button>
+                  <Button
+                    onClick={() => setActiveTab('map')}
+                    className="bg-white text-purple-600 hover:bg-purple-50 font-medium px-6 py-2"
+                  >
+                    Explore Map 🗺️
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+                <div className="text-4xl mb-3">🤖</div>
+                <h3 className="text-2xl font-bold text-blue-600 mb-2">Multi-Agent</h3>
+                <p className="text-gray-600">AI System</p>
+                <p className="text-sm text-gray-500 mt-2">Specialized healthcare agents</p>
+              </Card>
+              
+              <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+                <div className="text-4xl mb-3">🏥</div>
+                <h3 className="text-2xl font-bold text-green-600 mb-2">1000+</h3>
+                <p className="text-gray-600">Healthcare Facilities</p>
+                <p className="text-sm text-gray-500 mt-2">Globally accessible</p>
+              </Card>
+              
+              <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+                <div className="text-4xl mb-3">🌍</div>
+                <h3 className="text-2xl font-bold text-purple-600 mb-2">24/7</h3>
+                <p className="text-gray-600">Weather Integration</p>
+                <p className="text-sm text-gray-500 mt-2">Real-time global data</p>
+              </Card>
+              
+              <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+                <div className="text-4xl mb-3">⚡</div>
+                <h3 className="text-2xl font-bold text-orange-600 mb-2">Real-Time</h3>
+                <p className="text-gray-600">Live Updates</p>
+                <p className="text-sm text-gray-500 mt-2">Instant recommendations</p>
+              </Card>
+            </div>
+
+
+
+            {/* System Features */}
+            <Card className="p-8 bg-gradient-to-r from-gray-50 to-blue-50">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+                ✨ Advanced System Features
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl mb-3">🎯</div>
+                  <h3 className="font-semibold text-lg mb-2">Smart Recommendations</h3>
+                  <p className="text-gray-600 text-sm">
+                    AI-powered hospital suggestions based on injury type, location, weather, and real-time availability
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-3xl mb-3">📊</div>
+                  <h3 className="font-semibold text-lg mb-2">Location Benchmarking</h3>
+                  <p className="text-gray-600 text-sm">
+                    Compare healthcare quality, accessibility, and environmental factors across any location globally
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-3xl mb-3">🔄</div>
+                  <h3 className="font-semibold text-lg mb-2">Real-Time Integration</h3>
+                  <p className="text-gray-600 text-sm">
+                    Live data feeds for hospital availability, staff performance, and weather conditions
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* AI Chat Endpoint Content */}
         {activeTab === 'chat' && (
           <div className="space-y-6">
+            <Card className="p-6 bg-blue-50 border-blue-200">
+              <h2 className="text-2xl font-bold text-blue-800 mb-2">💬 AI Healthcare Chat Endpoint</h2>
+              <p className="text-blue-700">
+                Interactive consultation with specialized healthcare AI agents for personalized recommendations.
+              </p>
+            </Card>
+
             {/* Features Overview for Chat */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card className="p-4">
@@ -175,8 +284,16 @@ export default function HealthcarePage() {
           </div>
         )}
 
+        {/* Hospital Map Endpoint Content */}
         {activeTab === 'map' && (
           <div className="space-y-6">
+            <Card className="p-6 bg-green-50 border-green-200">
+              <h2 className="text-2xl font-bold text-green-800 mb-2">🗺️ Hospital Map Endpoint</h2>
+              <p className="text-green-700">
+                Global hospital mapping with weather integration and location benchmarking capabilities.
+              </p>
+            </Card>
+
             {/* Enhanced Map Controls */}
             <Card className="p-6">
               <div className="mb-4">
@@ -450,10 +567,10 @@ export default function HealthcarePage() {
           </div>
         )}
 
-        {/* Bottom Info Section */}
-        <div className="mt-12 text-center">
+        {/* System Capabilities Section */}
+        <div className="mt-12">
           <Card className="p-6 bg-white/50 backdrop-blur-sm">
-            <h3 className="font-semibold text-lg mb-4">🎯 System Capabilities</h3>
+            <h3 className="font-semibold text-lg mb-4 text-center">🎯 System Capabilities</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div className="space-y-2">
                 <Badge variant="secondary" className="w-full">Staff Evaluation</Badge>
@@ -470,6 +587,23 @@ export default function HealthcarePage() {
               <div className="space-y-2">
                 <Badge variant="secondary" className="w-full">Weather Intelligence</Badge>
                 <p className="text-gray-600">Location-aware health recommendations</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Footer with Last Updated Year */}
+        <div className="mt-8 text-center">
+          <Card className="p-4 bg-gray-50 border-gray-200">
+            <div className="flex justify-between items-center text-sm text-gray-600">
+              <div>
+                <span className="font-medium">Healthcare Multi-Agent System</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>Last Updated:</span>
+                <Badge variant="outline" className="font-mono">
+                  {new Date().getFullYear()}
+                </Badge>
               </div>
             </div>
           </Card>

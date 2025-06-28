@@ -109,7 +109,7 @@ export default function HospitalMap({ userLocation, searchLocation, injuryType, 
   const fetchHospitals = async (location: string) => {
     try {
       setSearchStatus('Finding hospitals...');
-      const response = await fetch('/api/hospitals/locations', {
+      const response = await fetch('http://localhost:8000/api/hospitals/locations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -136,7 +136,7 @@ export default function HospitalMap({ userLocation, searchLocation, injuryType, 
   const fetchWeather = async (location: string) => {
     try {
       setSearchStatus('Getting weather data...');
-      const response = await fetch('/api/weather', {
+      const response = await fetch('http://localhost:8000/api/weather', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ location }),
@@ -162,7 +162,7 @@ export default function HospitalMap({ userLocation, searchLocation, injuryType, 
       setLocationError(null);
 
       // Use our server-side geocoding API
-      const response = await fetch('/api/geocode', {
+      const response = await fetch('http://localhost:8000/api/geocode', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

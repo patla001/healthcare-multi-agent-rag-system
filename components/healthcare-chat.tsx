@@ -118,7 +118,7 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
         
         try {
           // Get weather data for the location
-          const weatherResponse = await fetch('/api/weather/current', {
+          const weatherResponse = await fetch('http://localhost:8000/api/weather/current', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lat: latitude, lon: longitude })

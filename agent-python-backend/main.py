@@ -123,6 +123,23 @@ class VectorizeRAGRequest(BaseModel):
     location: Optional[str] = None
 
 # ===============================
+# ADDITIONAL REQUEST MODELS
+# ===============================
+
+class WeatherRequest(BaseModel):
+    location: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+
+class GeocodeRequest(BaseModel):
+    location: str
+
+class HospitalLocationRequest(BaseModel):
+    location: str
+    injuryType: str = "general"
+    radius: int = 25
+
+# ===============================
 # ENHANCED VECTORIZE RAG INTEGRATION
 # ===============================
 
@@ -657,6 +674,132 @@ def extract_coordinates_with_openai(hospital_name: str, address: str, location: 
     return None
 
 # ===============================
+# HELPER FUNCTIONS FOR NEW ENDPOINTS
+# ===============================
+
+def get_weather_data(location: str = None, lat: float = None, lon: float = None) -> Dict[str, Any]:
+    """
+    Simulate weather data for a given location or coordinates
+    In production, this would call a real weather API
+    """
+    # Simulate weather data
+    import random
+    
+    conditions = ["Clear", "Partly Cloudy", "Cloudy", "Light Rain", "Sunny", "Overcast"]
+    
+    # Determine location name
+    if location:
+        location_name = location
+    elif lat is not None and lon is not None:
+        # Reverse geocode coordinates to location name (simplified)
+        if abs(lat - 34.0522) < 1 and abs(lon - (-118.2437)) < 1:
+            location_name = "Los Angeles, CA"
+        elif abs(lat - 40.7128) < 1 and abs(lon - (-74.0060)) < 1:
+            location_name = "New York, NY"
+        elif abs(lat - 41.8781) < 1 and abs(lon - (-87.6298)) < 1:
+            location_name = "Chicago, IL"
+        else:
+            location_name = f"Location at {lat:.2f}, {lon:.2f}"
+    else:
+        location_name = "Unknown Location"
+    
+    # Convert temperature to Fahrenheit for US locations
+    temp_celsius = round(random.uniform(15, 35), 1)
+    temp_fahrenheit = round((temp_celsius * 9/5) + 32, 1)
+    
+    return {
+        "location": location_name,
+        "temperature": temp_fahrenheit,  # Return Fahrenheit for compatibility
+        "description": random.choice(conditions),
+        "humidity": random.randint(30, 80),
+        "windSpeed": round(random.uniform(5, 25), 1),
+        "uvIndex": random.randint(1, 11),
+        "icon": "01d",  # Default sunny icon
+        "condition": random.choice(conditions)
+    }
+
+def geocode_location(location: str) -> Dict[str, Any]:
+    """
+    Geocode a location string to coordinates
+    In production, this would use a real geocoding service
+    """
+    # Common locations mapping for demo
+    location_coords = {
+        "los angeles, ca": {"lat": 34.0522, "lng": -118.2437, "display_name": "Los Angeles, California, USA"},
+        "new york, ny": {"lat": 40.7128, "lng": -74.0060, "display_name": "New York, New York, USA"},
+        "chicago, il": {"lat": 41.8781, "lng": -87.6298, "display_name": "Chicago, Illinois, USA"},
+        "houston, tx": {"lat": 29.7604, "lng": -95.3698, "display_name": "Houston, Texas, USA"},
+        "phoenix, az": {"lat": 33.4484, "lng": -112.0740, "display_name": "Phoenix, Arizona, USA"},
+        "philadelphia, pa": {"lat": 39.9526, "lng": -75.1652, "display_name": "Philadelphia, Pennsylvania, USA"},
+        "san antonio, tx": {"lat": 29.4241, "lng": -98.4936, "display_name": "San Antonio, Texas, USA"},
+        "san diego, ca": {"lat": 32.7157, "lng": -117.1611, "display_name": "San Diego, California, USA"},
+        "dallas, tx": {"lat": 32.7767, "lng": -96.7970, "display_name": "Dallas, Texas, USA"},
+        "san jose, ca": {"lat": 37.3382, "lng": -121.8863, "display_name": "San Jose, California, USA"},
+    }
+    
+    location_lower = location.lower().strip()
+    
+    # Check if we have exact match
+    if location_lower in location_coords:
+        return location_coords[location_lower]
+    
+    # Try partial matching
+    for key, coords in location_coords.items():
+        if any(part in location_lower for part in key.split(", ")):
+            return coords
+    
+    # Default to Los Angeles if no match found
+    return {
+        "lat": 34.0522, 
+        "lng": -118.2437, 
+        "display_name": f"{location} (estimated location)",
+        "estimated": True
+    }
+
+def get_hospital_locations(location: str, injury_type: str = "general", radius: int = 25) -> List[Dict[str, Any]]:
+    """
+    Generate hospital locations for a given area
+    In production, this would query a real hospital database
+    """
+    base_coords = geocode_location(location)
+    hospitals = []
+    
+    # Generate sample hospitals
+    hospital_names = [
+        "City General Hospital",
+        "Regional Medical Center", 
+        "Emergency Care Hospital",
+        "Urgent Care Clinic",
+        "Community Health Center",
+        "Trauma Center",
+        "Family Medicine Hospital",
+        "Specialty Care Facility"
+    ]
+    
+    import random
+    
+    for i, name in enumerate(hospital_names[:6]):  # Limit to 6 hospitals
+        # Generate coordinates within radius
+        lat_offset = random.uniform(-0.1, 0.1)
+        lng_offset = random.uniform(-0.1, 0.1)
+        
+        hospital = {
+            "id": f"hospital_{i+1}",
+            "name": name,
+            "address": f"{random.randint(100, 9999)} Medical Way, {location}",
+            "lat": base_coords["lat"] + lat_offset,
+            "lng": base_coords["lng"] + lng_offset,
+            "phone": f"({random.randint(200, 999)}) {random.randint(200, 999)}-{random.randint(1000, 9999)}",
+            "services": ["Emergency Care", "Urgent Care", "General Medicine"],
+            "rating": round(random.uniform(3.5, 5.0), 1),
+            "emergency": random.choice([True, False]),
+            "urgentCare": True
+        }
+        hospitals.append(hospital)
+    
+    return hospitals
+
+# ===============================
 # API ENDPOINTS
 # ===============================
 
@@ -855,6 +998,56 @@ async def healthcare_chat(request: ChatRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Healthcare chat error: {str(e)}")
+
+@app.post("/api/weather")
+async def get_weather(request: WeatherRequest):
+    """Get weather data for a location"""
+    try:
+        # Validate request has either location or coordinates
+        if not request.location and (request.lat is None or request.lon is None):
+            raise HTTPException(status_code=400, detail="Either location or lat/lon coordinates required")
+        
+        weather_data = get_weather_data(request.location, request.lat, request.lon)
+        return weather_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Weather service error: {str(e)}")
+
+@app.post("/api/weather/current")
+async def get_current_weather(request: WeatherRequest):
+    """Get current weather data for a location (alternative endpoint)"""
+    try:
+        # Validate request has either location or coordinates
+        if not request.location and (request.lat is None or request.lon is None):
+            raise HTTPException(status_code=400, detail="Either location or lat/lon coordinates required")
+        
+        weather_data = get_weather_data(request.location, request.lat, request.lon)
+        return weather_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Weather service error: {str(e)}")
+
+@app.post("/api/geocode")
+async def geocode_location_endpoint(request: GeocodeRequest):
+    """Geocode a location string to coordinates"""
+    try:
+        coords = geocode_location(request.location)
+        return coords
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Geocoding error: {str(e)}")
+
+@app.post("/api/hospitals/locations")
+async def get_hospitals_locations(request: HospitalLocationRequest):
+    """Get hospital locations for a given area"""
+    try:
+        hospitals = get_hospital_locations(request.location, request.injuryType, request.radius)
+        return {
+            "hospitals": hospitals,
+            "location": request.location,
+            "injuryType": request.injuryType,
+            "radius": request.radius,
+            "count": len(hospitals)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Hospital lookup error: {str(e)}")
 
 # ===============================
 # MAIN EXECUTION
