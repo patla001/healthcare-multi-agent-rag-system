@@ -56,7 +56,8 @@ interface LocationData {
   };
 }
 
-const PYTHON_BACKEND_URL = "http://localhost:8000";
+// Use environment variable for backend URL, fallback to Vercel serverless functions
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
 export default function HealthcareChat({ onHospitalRecommendations, onLocationUpdate }: HealthcareChatProps = {}) {
   const [messages, setMessages] = useState<Message[]>([
@@ -82,9 +83,9 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
 
   const checkBackendStatus = async () => {
     try {
-      console.log('Checking backend status at:', `${PYTHON_BACKEND_URL}/health`);
+      console.log('Checking backend status at:', `${BACKEND_URL}/health`);
       setBackendError(null);
-      const response = await fetch(`${PYTHON_BACKEND_URL}/health`);
+      const response = await fetch(`${BACKEND_URL}/health`);
       console.log('Backend response status:', response.status);
       if (response.ok) {
         const data = await response.json();
@@ -118,7 +119,7 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
         
         try {
           // Get weather data for the location
-          const weatherResponse = await fetch('http://localhost:8000/api/weather/current', {
+          const weatherResponse = await fetch(`${BACKEND_URL}/api/weather/current`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lat: latitude, lon: longitude })
@@ -296,7 +297,7 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
       } : { role: "user", content: input };
 
       console.log('📤 Sending message to backend:', messageWithContext);
-      console.log('🔗 Backend URL:', `${PYTHON_BACKEND_URL}/api/healthcare-chat`);
+      console.log('🔗 Backend URL:', `${BACKEND_URL}/api/healthcare-chat`);
       
       const requestOptions = {
         method: "POST",
@@ -311,7 +312,7 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
       
       console.log('📋 Request options:', requestOptions);
       
-      const response = await fetch(`${PYTHON_BACKEND_URL}/api/healthcare-chat`, requestOptions);
+      const response = await fetch(`${BACKEND_URL}/api/healthcare-chat`, requestOptions);
 
       console.log('📥 Backend response status:', response.status);
       if (!response.ok) {
@@ -397,7 +398,7 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
       
       let errorDetails = '';
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        errorDetails = `\n\n🔍 Network Details:\n- URL: ${PYTHON_BACKEND_URL}/api/healthcare-chat\n- Error Type: ${error.name}\n- Error Message: ${error.message}\n\n💡 Troubleshooting:\n1. Check if backend is running: curl http://localhost:8000/health\n2. Check browser console for CORS errors\n3. Try refreshing the page\n4. Check if port 8000 is blocked by firewall`;
+        errorDetails = `\n\n🔍 Network Details:\n- URL: ${BACKEND_URL}/api/healthcare-chat\n- Error Type: ${error.name}\n- Error Message: ${error.message}\n\n💡 Troubleshooting:\n1. Check if backend is running\n2. Check browser console for CORS errors\n3. Try refreshing the page\n4. Check network connectivity`;
       }
       
       const errorMessage: Message = {
@@ -452,6 +453,8 @@ export default function HealthcareChat({ onHospitalRecommendations, onLocationUp
         return "border-green-200 bg-green-50";
     }
   };
+
+
 
   return (
     <div className="flex flex-col h-[90vh] max-w-4xl mx-auto p-4">

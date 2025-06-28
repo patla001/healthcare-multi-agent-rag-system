@@ -21,11 +21,26 @@
     }
   ],
   "env": {
-    "PYTHON_VERSION": "3.11"
+    "PYTHON_VERSION": "3.11",
+    "NEXT_PUBLIC_BACKEND_URL": ""
   },
   "functions": {
     "agent-python-backend/main.py": {
       "runtime": "python3.11"
+    },
+    "api/python.py": {
+      "runtime": "python3.9"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/python.py"
+    }
+  ],
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_BACKEND_URL": ""
     }
   }
 } 

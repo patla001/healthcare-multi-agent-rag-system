@@ -105,11 +105,14 @@ export default function HospitalMap({ userLocation, searchLocation, injuryType, 
   const [mapCenter, setMapCenter] = useState<[number, number]>([39.8283, -98.5795]); // Default to center of USA
   const [isClient, setIsClient] = useState(false);
 
+  // Use environment variable for backend URL, fallback to Vercel serverless functions
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+
   // Fetch hospitals from your backend
   const fetchHospitals = async (location: string) => {
     try {
       setSearchStatus('Finding hospitals...');
-      const response = await fetch('http://localhost:8000/api/hospitals/locations', {
+      const response = await fetch(`${BACKEND_URL}/api/hospitals/locations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -136,7 +139,7 @@ export default function HospitalMap({ userLocation, searchLocation, injuryType, 
   const fetchWeather = async (location: string) => {
     try {
       setSearchStatus('Getting weather data...');
-      const response = await fetch('http://localhost:8000/api/weather', {
+      const response = await fetch(`${BACKEND_URL}/api/weather`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ location }),
@@ -162,7 +165,7 @@ export default function HospitalMap({ userLocation, searchLocation, injuryType, 
       setLocationError(null);
 
       // Use our server-side geocoding API
-      const response = await fetch('http://localhost:8000/api/geocode', {
+      const response = await fetch(`${BACKEND_URL}/api/geocode`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
